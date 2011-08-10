@@ -1,15 +1,17 @@
 <?php
 /**
  * colorize
- * Jesse Baird
+ * Jesse Baird <jebaird@gmail.com>
  * 9/21/2010
  * 
  * Dual licensed under the MIT (MIT-LICENSE.txt)
  * and GPL (GPL-LICENSE.txt) licenses.
  *
- * simple php class to find colors in an iamge and replace them
+ * simple php class to manipulate colors in an iamge and replace them
  * 
  * http://stackoverflow.com/questions/456044/can-i-swap-colors-in-image-using-gd-library-in-php
+ * http://php.net/manual/en/function.imagefilter.php
+ * 
  * 
  **/
  class colorize{
@@ -29,8 +31,30 @@
             $this->images[basename($img)]=$this->createImage($img);
         }
     }
-    
-    
+    /**
+     * colorizer::tint()
+     * 
+     * tint all non-trasparent pixels in the supplied images with color 
+     * @since 8/10/2011
+	 * @author Jesse Baird <jebaird@gmail.com>
+     * @param mixed $tint
+     * @param mixed $opacity
+     * @param string $fileNamePrefix
+     * @return void
+     */
+    public function tint( $tint=0000000, $opacity=0, $fileNamePrefix='' ){
+    	$tint = $this->hexToRGB( $tint );
+		
+		foreach($this->images as $filename => $img){
+				
+			imagefilter($img, IMG_FILTER_COLORIZE, $tint['r'], $tint['g'], $tint['b'], $opacity);
+			
+			$this->saveImage((($fileNamePrefix!='')?$fileNamePrefix.'_':'').$filename,$img);
+            imagedestroy($img);
+		}
+    }
+	
+	
     /**
      * colorizer::replace()
      * 
@@ -146,6 +170,10 @@
                
         switch($this->getExtention($filename)){
             case 'png':
+				//save the alpha - prevent transparent px from turning black
+				imagealphablending( $img, false );
+				imagesavealpha( $img, true );
+                
                 imagepng($img,self::CACHE_PATH.$filename);
                 break;
             case 'jpg':
